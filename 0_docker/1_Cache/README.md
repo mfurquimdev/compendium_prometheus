@@ -18,10 +18,10 @@ RUN echo "Olá do momento de Build"
 CMD ["/NossoScript.sh"]
 ```
 
-Ao executar o comando de construir imagem com o novo `Dockerfile`, temos o seguinte resultado:
+Ao executar o comando de construir imagem com o novo `Dockerfile` e rodar o contêiner, temos os seguintes resultados:
 
 ```
-$ docker build -t 1cache:v0.0.1 1_Cache/
+$ docker build -t 1cache:v0.0.1 .
 Sending build context to Docker daemon  3.072kB
 Step 1/5 : FROM alpine
  ---> b7b28af77ffe
@@ -50,5 +50,5 @@ Olá do nosso script
 Momento de construção vs Momento de execução
 --------------------------------------------
 
-Como pode ser observado na sessão anterior, há uma diferença nos comandos executados em momento de construção da imagem e momento de execução do contêiner. Ao executar o `docker build`, o comando `RUN echo "Olá do momento de Build"` é executado. Este comando é executado apenas neste momento de construção de imagem e, apesar de não modificar efetivamente a imagem, o Docker considera esta etapa como uma camada da imagem. Ao executar o contêiner desta imagem, este comando não é executado novamente. Da mesma forma, o script `NossoScript.sh` é executado apenas na execução do contêiner, e não na construção da imagem.
+Como pode ser observado na sessão anterior, há uma diferença nos comandos executados em momento de construção da imagem e momento de execução do contêiner. Ao executar o `docker build`, o comando `RUN echo "Olá do momento de Build"` é executado. Este comando é executado apenas neste momento de construção de imagem e, apesar de não modificar efetivamente a imagem, o Docker considera esta etapa como uma camada da imagem. Ao rodar o contêiner desta imagem, este comando não é executado novamente. Da mesma forma, o script `NossoScript.sh` é executado apenas na execução do contêiner, e não na construção da imagem.
 

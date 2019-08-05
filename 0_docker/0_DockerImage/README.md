@@ -27,10 +27,10 @@ RUN chmod a+x /NossoScript.sh
 CMD ["/NossoScript.sh"]
 ```
 
-`NossoScript.sh` apenas escreve uma mensagem no terminal. A primeira linha indica qual programa deve ser executado ao lê-lo (é preciso executar com `sh` pois não há `bash` na imagem do `alpine`), e a outra linha é o comando que escreve por si`. No `Dockerfile`, a primeira linha determina em qual Imagem já existente a nova será criada. Neste caso, será baseado na imagem do `alpine`, pois a imagem `scratch` não possui nem `sh` para executar o script. O segundo comando copia o arquivo de um local tendo referência o arquivo `Dockerfile` para dentro da imagem com destino a raiz (`/`) da imagem. O terceiro comando garante que o `/NossoScript.sh` é executável e a última linha é o comando executado ao executar a imagem. Para construir a imagem, digite o seguinte comando no terminal:
+O arquivo `NossoScript.sh` apenas escreve uma mensagem no terminal. A primeira linha indica qual programa deve ser executado ao lê-lo (é preciso executar com `sh` pois não há `bash` na imagem do `alpine`), e a outra linha é o comando que escreve por si. No `Dockerfile`, a primeira linha determina em qual Imagem já existente a nova será criada. Neste caso, será baseado na imagem do `alpine`, pois a imagem `scratch` não possui nem `sh` para executar o script. O segundo comando copia o arquivo de um local tendo referência o arquivo `Dockerfile` para dentro da imagem com destino a raiz (`/`) da imagem. O terceiro comando garante que o `/NossoScript.sh` é executável e a última linha é o comando executado ao executar a imagem. Para construir a imagem, digite o seguinte comando no terminal:
 
 ```
-$ docker build 0_DockerImage/
+$ docker build .
 Sending build context to Docker daemon  3.072kB
 Step 1/4 : FROM alpine
 latest: Pulling from library/alpine
@@ -58,7 +58,10 @@ $ docker run 2030515cbe4c
 Olá do nosso script
 ```
 
-Para facilitar a identificação das imagens, existe um parâmetro para colocar um rótulo na imagem construida. É possível executar o contêiner tanto com a hash da imagem quanto sua _tag_.
+Identificação de Imagem
+-----------------------
+
+Para facilitar a identificação das imagens, existe um parâmetro para colocar um rótulo na imagem construida. É possível rodar o contêiner tanto com a hash da imagem quanto sua _tag_.
 
 ```
 $ docker build -t 0dockerimage .
