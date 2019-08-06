@@ -18,7 +18,7 @@ ENTRYPOINT ["/bin/cat"]
 CMD ["/NossoTexto.txt"]
 ```
 
-O arquivo `NossoTexto.txt` nada mais é do que texto, nada de especial. O `Dockerfile`, por outro lado, é onde se encontra a complexidade. Desta vez, o arquivo não vai ser executado por um `shell`, mas sim terá o seu conteúdo conCATenado na saída padrão (terminal). O programa definido em `ENTRYPOINT` é o programa executado ao rodar o contêiner. Tudo o que estiver em  `CMD` é o argumento passado para o `ENTRYPOINT`. Por padrão, o `ENTRYPOINT` é um `shell`<sup>[stackoverflow](https://stackoverflow.com/questions/21553353/what-is-the-difference-between-cmd-and-entrypoint-in-a-dockerfile)</sup>. Neste caso, o programa a ser executado é o `cat` e o argumento passado a ele é o `NossoTexto.txt`. Como resultado, ao subir o contêiner, o conteúdo _Olá do nosso texto_ é escrito na tela. Construa e execute a imagem com os comandos abaixo:
+O arquivo `NossoTexto.txt` nada mais é do que texto, nada de especial. O `Dockerfile`, por outro lado, é onde se encontra a complexidade. Desta vez, o arquivo não vai ser executado por um `shell`, mas sim terá o seu conteúdo conCATenado na saída padrão (terminal). O programa definido em `ENTRYPOINT` é o programa executado ao rodar o contêiner. Tudo o que estiver em  `CMD` é o argumento passado para o `ENTRYPOINT`. Por padrão, o `ENTRYPOINT` é um `shell`<sup>[cmd-vs-entrypoint](https://stackoverflow.com/questions/21553353/what-is-the-difference-between-cmd-and-entrypoint-in-a-dockerfile)</sup>. Neste caso, o programa a ser executado é o `cat` e o argumento passado a ele é o `NossoTexto.txt`. Como resultado, ao subir o contêiner, o conteúdo _Olá do nosso texto_ é escrito na tela. Construa e execute a imagem com os comandos abaixo:
 
 ```
 $ docker build -t 3entrypoint .
