@@ -1,5 +1,7 @@
-Docker
-======
+Imagem Docker
+=============
+
+Após entendido como executar uma imagem, a próxima etapa é aprender como criar uma imagem para executar um script personalizado.
 
 Criação de imagem Docker
 ------------------------
@@ -64,7 +66,7 @@ Identificação de Imagem
 Para facilitar a identificação das imagens, existe um parâmetro para colocar um rótulo na imagem construida. É possível rodar o contêiner tanto com a hash da imagem quanto sua _tag_.
 
 ```
-$ docker build -t 0dockerimage .
+$ docker build -t 1dockerimage .
 Sending build context to Docker daemon  3.072kB
 Step 1/4 : FROM alpine
  ---> b7b28af77ffe
@@ -78,15 +80,15 @@ Step 4/4 : CMD ["/NossoScript.sh"]
  ---> Using cache
  ---> 2030515cbe4c
 Successfully built 2030515cbe4c
-Successfully tagged 0dockerimage:latest
-$ docker run 0dockerimage
+Successfully tagged 1dockerimage:latest
+$ docker run 1dockerimage
 Olá do nosso script
 ```
 
 É comum identificarmos a imagem através de versões, além de seu nome. Isso também pode ser feito com o parâmetro da _tag_ passado no _build_, ou no comando `image tag`
  
 ```
-$ docker image tag 0dockerimage 0dockerimage:v0.0.1
-$ docker run 0dockerimage:v0.0.1
+$ docker image tag 1dockerimage 1dockerimage:v0.0.1
+$ docker run 1dockerimage:v0.0.1
 Olá do nosso script
 ```

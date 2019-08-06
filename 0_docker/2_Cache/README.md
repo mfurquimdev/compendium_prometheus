@@ -1,8 +1,5 @@
-Docker
-======
-
 Cache
------
+======
 
 Devido ao processo de criação de imagem otimizado do Docker, as imagens são criadas por camadas, começando pelo topo do arquivo `Dockerfile` até o final. Caso não haja alteração nas primeiras linhas, o Docker apenas reutiliza a camada já existente. Se alterarmos o arquivo adicionando um comando echo, ao construir a imagem nova, as camadas de cima que não sofreram alterações serão reaproveitadas, reduzindo o tempo de construção da imagem.
 
@@ -21,7 +18,7 @@ CMD ["/NossoScript.sh"]
 Ao executar o comando de construir imagem com o novo `Dockerfile` e rodar o contêiner, temos os seguintes resultados:
 
 ```
-$ docker build -t 1cache:v0.0.1 .
+$ docker build -t 2cache:v0.0.1 .
 Sending build context to Docker daemon  3.072kB
 Step 1/5 : FROM alpine
  ---> b7b28af77ffe
@@ -41,8 +38,8 @@ Step 5/5 : CMD ["/NossoScript.sh"]
 Removing intermediate container e67411ca967e
  ---> 08f9291ac461
 Successfully built 08f9291ac461
-Successfully tagged 1cache:v0.0.1
-$ docker run 1cache:v0.0.1
+Successfully tagged 2cache:v0.0.1
+$ docker run 2cache:v0.0.1
 Olá do nosso script
 ```
 
