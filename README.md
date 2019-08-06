@@ -1,11 +1,10 @@
 Compêndio Prometheus + Grafana
 ==============================
 
-0 Docker
+Docker
 --------
 
-Fazer imagem de Docker com um script próprio e printar na tela uma variável passada como argumento no docker-compose
-
+Todos os exemplos utilizarão `Docker` e `docker-compose`. Este conhecimento é essencial e será explicado na sessão [0\_docker].
 
 1 /Metrics
 ----------
