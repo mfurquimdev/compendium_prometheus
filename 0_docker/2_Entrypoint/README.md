@@ -1,8 +1,12 @@
 Docker
 ======
 
-CMD vs Entrypoint
+O Docker define duas palavras chaves que permitem maior versatilidade na construção de imagens. `CMD` e `ENTRYPOINT` é o conjunto que define o que será executado ao rodar o contêiner da imagem.
+
+CMD vs ENTRYPOINT
 -----------------
+
+Considere o conteúdo dos seguintes arquivos `NossoTexto.txt` e `Dockerfile`:
 
 **NossoTexto.txt**
 ```
@@ -19,6 +23,7 @@ ENTRYPOINT ["/bin/cat"]
 CMD ["/NossoTexto.txt"]
 ```
 
+O arquivo `NossoTexto.txt` nada mais é do que texto, nada de especial. O `Dockerfile`, por outro lado, é onde se encontra a complexidade. Desta vez, o arquivo não vai ser executado por um `shell`, mas sim terá o seu conteúdo conCATenado na saída padrão (terminal). O programa definido em `ENTRYPOINT` é o programa executado ao rodar o contêiner. Tudo o que estiver em  `CMD` é o argumento passado para o `ENTRYPOINT`. Neste caso, o programa a ser executado é o `cat` e o argumento passado a ele é o `NossoTexto.txt`. Como resultado, ao subir o contêiner, o conteúdo _Olá do nosso texto_ é escrito na tela. Construa e execute a imagem com os comandos abaixo:
 
 ```
 $ docker build -t 2entrypoint .
@@ -37,9 +42,6 @@ Removing intermediate container 8aaaaa856b55
  ---> f70742959007
 Successfully built f70742959007
 Successfully tagged 2entrypoint:latest
-```
-
-```
 $ docker run 2entrypoint:latest
 Olá do nosso texto
 ```
