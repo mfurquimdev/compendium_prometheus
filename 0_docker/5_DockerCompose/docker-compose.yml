@@ -1,0 +1,9 @@
+version: '3.5'
+
+services:
+
+  envvar:
+    build: .
+    image: 5dockercompose:v0.0.1
+    environment:
+      - OLA_MUNDO=Alterando pelo docker-compose

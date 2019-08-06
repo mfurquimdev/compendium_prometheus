@@ -1,0 +1,15 @@
+version: '3.5'
+
+services:
+
+  envvar1:
+    build: .
+    image: 5dockercompose:v0.0.1
+    environment:
+      - OLA_MUNDO=Olá do primeiro serviço
+
+  envvar2:
+    build: .
+    image: 5dockercompose:v0.0.1
+    environment:
+      - OLA_MUNDO=Olá do segundo serviço
