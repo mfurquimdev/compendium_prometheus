@@ -1,0 +1,9 @@
+version: '3.5'
+
+services:
+  tomcat:
+    image: mfurquim/metrics-test:v0.0.1
+    build: .
+    ports:
+      - "8888:8080"
+
