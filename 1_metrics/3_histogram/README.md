@@ -1,7 +1,7 @@
-Gauge
-=====
+Histogram
+=========
 
-Para este segundo exemplo, será usado um código Java para expor a métrica de _gauge_. Será mostrado apenas as partes importantes para importar as bibliotecas, declarar variáveis, alterá-la, e expô-la.
+Para este segundo exemplo, será usado um código Java para expor a métrica de _histogram_. Será mostrado apenas as partes importantes para importar as bibliotecas, declarar variáveis, alterá-la, e expô-la.
 
 Para gerar o pacote, será usado o maven. O maven precisa de um arquivo **pom.xml** que contém informações sobre o projeto e suas dependências. As dependências importantes para este exemplo são:
 
@@ -103,11 +103,11 @@ $ mvn package
 [INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ servlet-test ---
 [INFO] Changes detected - recompiling the module!
 [WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
-[INFO] Compiling 2 source files to /Users/mfurquim/IBM/compendio_prometheus/1_metrics/2_gauge/target/classes
+[INFO] Compiling 2 source files to /Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/target/classes
 [INFO]
 [INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ servlet-test ---
 [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-[INFO] skip non existing resourceDirectory /Users/mfurquim/IBM/compendio_prometheus/1_metrics/2_gauge/src/test/resources
+[INFO] skip non existing resourceDirectory /Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/src/test/resources
 [INFO]
 [INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ servlet-test ---
 [INFO] Nothing to compile - all classes are up to date
@@ -117,10 +117,10 @@ $ mvn package
 [INFO]
 [INFO] --- maven-war-plugin:2.2:war (default-war) @ servlet-test ---
 [INFO] Packaging webapp
-[INFO] Assembling webapp [servlet-test] in [/Users/mfurquim/IBM/compendio_prometheus/1_metrics/2_gauge/target/servlet-test-1.0-SNAPSHOT]
+[INFO] Assembling webapp [servlet-test] in [/Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/target/servlet-test-1.0-SNAPSHOT]
 [INFO] Processing war project
 [INFO] Webapp assembled in [62 msecs]
-[INFO] Building war: /Users/mfurquim/IBM/compendio_prometheus/1_metrics/2_gauge/target/servlet-test-1.0-SNAPSHOT.war
+[INFO] Building war: /Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/target/servlet-test-1.0-SNAPSHOT.war
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
@@ -179,8 +179,8 @@ Step 3/3 : COPY tomcat-users.xml  $CATALINA_HOME/conf/
 
 Successfully built 87ad7a6d03b0
 Successfully tagged mfurquim/metrics-test:v0.0.1
-Creating 2_gauge_tomcat_1 ... done
-Attaching to 2_gauge_tomcat_1
+Creating 3_histogram_tomcat_1 ... done
+Attaching to 3_histogram_tomcat_1
 tomcat_1  | 07-Aug-2019 20:20:26.140 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version:        Apache Tomcat/8.0.53
 tomcat_1  | 07-Aug-2019 20:20:26.147 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server built:          Jun 29 2018 14:42:45 UTC
 tomcat_1  | 07-Aug-2019 20:20:26.147 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server number:         8.0.53.0

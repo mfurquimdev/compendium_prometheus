@@ -1,7 +1,7 @@
 Counter
 =======
 
-Para instrumentar o código adicionando um counter, será usado um programa em linguagem Go. A implementação em outras linguagens é de forma similar. Será usado um exemplo em Java para o próximo exemplo de métrica.
+Para instrumentar o código adicionando um counter, será usado um programa em linguagem Go. A implementação em outras linguagens é de forma similar. Será usado um exemplo em Java para o exemplo de métrica do histogram.
 
 O conteúdo do arquivo `src/main.go` será mostrado em partes para o melhor entendimento do código. Para executá-lo é preciso instalar [golang](https://golang.org/dl/) e baixar a dependência com `$ go get github.com/prometheus/client_golang/prometheus`.
 
