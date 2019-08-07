@@ -1,9 +1,34 @@
 Gauge
 =====
 
-Para este segundo exemplo, será usado um código Java **TestServlet.java** para expor a métrica de _gauge_. Será mostrado apenas as partes importantes para importar as bibliotecas, declarar variáveis, alterá-la, e expô-la.
+Para este segundo exemplo, será usado um código Java para expor a métrica de _gauge_. Será mostrado apenas as partes importantes para importar as bibliotecas, declarar variáveis, alterá-la, e expô-la.
 
-É preciso importar o contador, histograma e o exportador das métricas do prometheus.
+Para gerar o pacote, será usado o maven. O maven precisa de um arquivo **pom.xml** que contém informações sobre o projeto e suas dependências. As dependências importantes para este exemplo são:
+
+**pom.xml**
+```xml
+<dependencies>
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>4.0.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient</artifactId>
+        <version>0.6.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_servlet</artifactId>
+        <version>0.6.0</version>
+    </dependency>
+</dependencies>
+```
+
+No **TestServlet.java**, é importado o contador, histograma e o exportador das métricas do prometheus.
 
 ```java
 import io.prometheus.client.Counter;
@@ -11,7 +36,7 @@ import io.prometheus.client.Histogram;
 import io.prometheus.client.exporter.MetricsServlet;
 ```
 
-Depois, declare as variáveis utilizando o build do tipo de métrica que será utilizado. O endpoint para este teste é `/test`. Isso quer dizer que cada vez que acessar o `{{url}}/test`, a variável será incrementada de acordo.
+Depois, é declarado as variáveis utilizando o build do tipo de métrica que será utilizado. O endpoint para este teste é `/test`. Isso quer dizer que cada vez que acessar o `{{url}}/test`, a variável será incrementada de acordo.
 
 ```java
 @WebServlet(name = "TestServlet", urlPatterns = "/test")
@@ -25,9 +50,9 @@ public class TestServlet extends HttpServlet {
 
 ```
 
-Tanto o `Counter` quanto o `Histogram` precisam de nomes e de um texto de ajuda, assim como no exemplo passado em Golang. Depois de criá-las, é preciso registrar com o `.register()`. O `Histogram` ainda possui um parâmetro a mais opcional que são os "baldes". Estes _buckets_ nada mais são que contadores dos valores. Foram definidos alguns valores entre 0 e 1. Quando um valor abaixo de ou igual a (le) 1.0 é observado, o _bucket_ referente a 1.0 vai incrementar. Caso um valor `le` a 0.9 seja observado, então os baldes tanto de 1.0 quanto de 0.9 serão incrementados. Isso por que o valor que é menor do que 0.9, também é menor do que 1.0. Dessa forma, um valor menor que 0.1 (o menor balde) irá incrementar todos os _buckets_. Mais abaixo será mostrado um possível resultado no `/metrics`.
+Tanto o `Counter` quanto o `Histogram` precisam de nomes e de um texto de ajuda, assim como no exemplo passado em Golang. Depois de criá-las, é preciso registrar com o `.register()`. O `Histogram` ainda possui um parâmetro a mais opcional que são os "baldes". Estes _buckets_ nada mais são que contadores dos valores. Foram definidos alguns valores entre 0 e 1. Quando um valor abaixo de ou igual a (`le`) 1.0 é observado, o _bucket_ referente a 1.0 vai incrementar. Caso um valor `le=0.9` seja observado, então os baldes tanto de 1.0 quanto de 0.9 serão incrementados. Isso por que o valor que é menor do que 0.9, também é menor do que 1.0. Dessa forma, um valor menor que 0.1 (o menor balde) irá incrementar todos os _buckets_. Mais abaixo será mostrado um possível resultado no `/metrics`.
 
-Quando o `{{url}}/test` é acessado, a função `doGet` é executada, de forma que o `requests` é incrementado e `histRand` é adicionado um valor aleatório entre 0 e 1.
+Quando o `{{url}}/test` é acessado, a função `doGet()` é executada, de forma que o `requests` é incrementado e `histRand` é adicionado um valor aleatório entre 0 e 1.
 
 ```java
     @Override
@@ -118,7 +143,7 @@ services:
       - "8888:8080"
 ```
 
-No `ports`, a porta 8080 do contêiner é mapeada para a porta 8888 do host.
+No `ports`, a porta `8080` do contêiner é mapeada para a porta `8888` do host.
 
 **Dockerfile**
 ```
@@ -128,7 +153,7 @@ COPY target/servlet-test-1.0-SNAPSHOT.war /usr/local/tomcat/webapps/
 COPY tomcat-users.xml  $CATALINA_HOME/conf/
 ```
 
-O `Dockerfile` copia o `war`para o `webapps`, que o Tomcat vai olhar para fazer o deploy automático. O Tomcat precisa de um arquivo de usuários para caso queira fazer login e gerenciar os deploys.
+O `Dockerfile` copia o `war`para o `webapps`, que o Tomcat vai olhar para fazer o deploy automático. O outro arquivo adicionado para dentro da imagem do Tomcat é um arquivo de usuários para caso queira fazer login e gerenciar os deploys.
 
 **tomcat-users.xml**
 ```
@@ -201,7 +226,7 @@ tomcat_1  | 07-Aug-2019 20:20:27.580 INFO [main] org.apache.coyote.AbstractProto
 tomcat_1  | 07-Aug-2019 20:20:27.586 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in 1335 ms
 ```
 
-Agora que o servidor de aplicações Tomcat está rodando com o `servlet-test`, acesse a url `http://localhost:8888/servlet-test-1.0-SNAPSHOT/test` algumas vezes para gerar as métricas. Possível resultado depois de acessar 49 vezes:
+Agora que o servidor de aplicações Tomcat está rodando com o `servlet-test`, acesse a url `http://localhost:8888/servlet-test-1.0-SNAPSHOT/test` algumas vezes para gerar as métricas. Um possível resultado depois de acessar 49 vezes é o seguinte:
 ```
 Número de requisições: 49.0
 Histogram Random:
@@ -216,7 +241,7 @@ Histogram Random:
 	Name: requests_random_numbers_sum LabelNames: [] labelValues: [] Value: 22.38473968542088 TimestampMs: null
 ```
 
-O Endpoint que o Prometheus faz scrap das métricas é `http://localhost:8888/servlet-test-1.0-SNAPSHOT/metrics`. Um possível resultado das métricas após acessar o `/test` 49 vezes:
+O Endpoint que o Prometheus faz scrap das métricas é `http://localhost:8888/servlet-test-1.0-SNAPSHOT/metrics`. O mesmo resultado das métricas quando acessado o `/test` 49 vezes, mas no `/metrics`, é o seguinte:
 ```
 # HELP requests_total Total número de requisições.
 # TYPE requests_total counter
@@ -233,59 +258,6 @@ requests_random_numbers_bucket{le="+Inf",} 49.0
 requests_random_numbers_count 49.0
 requests_random_numbers_sum 22.38473968542088
 ```
-
-
-
-**pom.xml**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>br.com.furquim</groupId>
-    <artifactId>servlet-test</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    <packaging>war</packaging>
-
-
-    <dependencies>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient</artifactId>
-            <version>0.6.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_servlet</artifactId>
-            <version>0.6.0</version>
-        </dependency>
-    </dependencies>
-
-</project>
-```
-
 
 
 
