@@ -13,3 +13,19 @@ Estrutura
 ---------
 
 A primeira coisa neste compêndio é **executar** [0\_HelloWorld] uma imagem docker qualquer e entender que é possível subir o contêiner em modo interativo ou não. Depois, **construir** [1\_DockerImage] uma imagem docker, entendendo seu processo de construção em camadas e a utilização de **cache** [2\_Cache] para otimizá-lo. Dois conceitos importantes são o de **entrypoint** e **cmd** [3\_Entrypoint] e a comunicação com o contêiner através de **variáveis de ambiente** [4\_EnvVar]. Por fim, utilizar o **docker-compose** [5\_DockerCompose] para facilitar rodar os contêiners.
+
+
+Troubleshoot
+------------
+
+Se estiver tendo problemas com o proxy, adicione `"bip" : "192.168.233.1/24"` no `~/.docker/daemon.json`:
+
+**~/.docker/daemon.json**
+```
+{
+  "bip" : "192.168.233.1/24",
+  "debug" : true,
+  "experimental" : false
+}
+```
+
