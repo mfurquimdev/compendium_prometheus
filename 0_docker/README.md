@@ -29,3 +29,8 @@ Se estiver tendo problemas com o proxy, adicione `"bip" : "192.168.233.1/24"` no
 }
 ```
 
+TODO
+----
+
+* [ ] Explicar `VOLUMES [""]`
+* [ ] Explicar `EXPOSE`
