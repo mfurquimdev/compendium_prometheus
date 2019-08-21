@@ -1,0 +1,37 @@
+version: '3.3'
+
+services:
+
+  prometheus:
+    image: mfurquim/prometheus:0.0.1
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        scrapeinterval: 30s
+        evaluationinterval: 15s
+        scrapetimeout: 10s
+        tsdbretention: 3d
+        targetsfile: scrape/green/ptest-targets.json
+        rulespath: scrape/rules
+        startupfile: scrape/startup.sh
+        region: green
+        service: release
+        prometheusname: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - prometheus:/prometheus
+
+
+volumes:
+  prometheus:
+
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.5.0/24
+
+
