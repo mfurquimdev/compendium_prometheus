@@ -76,12 +76,10 @@ public class MServlet extends MetricsServlet {
 }
 ```
 
-
-
-Para gerar o arquivo `war` é preciso executar o seguinte comando do maven:
+Para gerar o arquivo `war` é preciso executar o comando `$ mvn package`. Caso deseja, é possível utilizar uma imagem docker para executar este comando. Porém, em ambiente docker demora 70 segundos, em média. Em contra partida, rodando o maven localmente demora 2 segundos, em média.
 
 ```
-$ mvn package
+$ docker run -it --rm -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven mvn clean package
 [INFO] Scanning for projects...
 [WARNING]
 [WARNING] Some problems were encountered while building the effective model for br.com.furquim:servlet-test:war:1.0-SNAPSHOT
@@ -95,6 +93,63 @@ $ mvn package
 [INFO] --------------------< br.com.furquim:servlet-test >---------------------
 [INFO] Building servlet-test 1.0-SNAPSHOT
 [INFO] --------------------------------[ war ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ servlet-test ---
+[INFO] Deleting /usr/src/mymaven/target
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ servlet-test ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 0 resource
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ servlet-test ---
+[INFO] Changes detected - recompiling the module!
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 2 source files to /usr/src/mymaven/target/classes
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ servlet-test ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory /usr/src/mymaven/src/test/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ servlet-test ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-surefire-plugin:2.12.4:test (default-test) @ servlet-test ---
+[INFO] No tests to run.
+[INFO]
+[INFO] --- maven-war-plugin:2.2:war (default-war) @ servlet-test ---
+[INFO] Packaging webapp
+[INFO] Assembling webapp [servlet-test] in [/usr/src/mymaven/target/servlet-test-1.0-SNAPSHOT]
+[INFO] Processing war project
+[INFO] Webapp assembled in [187 msecs]
+[INFO] Building war: /usr/src/mymaven/target/servlet-test-1.0-SNAPSHOT.war
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:10 min
+[INFO] Finished at: 2019-08-21T19:25:41Z
+[INFO] ------------------------------------------------------------------------
+```
+
+Caso prefira executar localmente, use o seguinte comando do maven:
+
+```
+$ mvn clean package
+[INFO] Scanning for projects...
+[WARNING]
+[WARNING] Some problems were encountered while building the effective model for br.com.furquim:servlet-test:war:1.0-SNAPSHOT
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-war-plugin is missing. @ line 12, column 21
+[WARNING]
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING]
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING]
+[INFO]
+[INFO] --------------------< br.com.furquim:servlet-test >---------------------
+[INFO] Building servlet-test 1.0-SNAPSHOT
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ servlet-test ---
+[INFO] Deleting /Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/target
 [INFO]
 [INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ servlet-test ---
 [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
@@ -119,13 +174,13 @@ $ mvn package
 [INFO] Packaging webapp
 [INFO] Assembling webapp [servlet-test] in [/Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/target/servlet-test-1.0-SNAPSHOT]
 [INFO] Processing war project
-[INFO] Webapp assembled in [62 msecs]
+[INFO] Webapp assembled in [25 msecs]
 [INFO] Building war: /Users/mfurquim/IBM/compendio_prometheus/1_metrics/3_histogram/target/servlet-test-1.0-SNAPSHOT.war
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  2.561 s
-[INFO] Finished at: 2019-08-07T17:18:29-03:00
+[INFO] Total time:  1.348 s
+[INFO] Finished at: 2019-08-21T16:31:09-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 
@@ -137,7 +192,7 @@ version: '3.5'
 
 services:
   tomcat:
-    image: mfurquim/metrics-test:v0.0.1
+    image: mfurquim/metrics-histogram:v1.0.0
     build: .
     ports:
       - "8888:8080"
@@ -178,7 +233,7 @@ Step 3/3 : COPY tomcat-users.xml  $CATALINA_HOME/conf/
  ---> 87ad7a6d03b0
 
 Successfully built 87ad7a6d03b0
-Successfully tagged mfurquim/metrics-test:v0.0.1
+Successfully tagged mfurquim/metrics-histogram:v1.0.0
 Creating 3_histogram_tomcat_1 ... done
 Attaching to 3_histogram_tomcat_1
 tomcat_1  | 07-Aug-2019 20:20:26.140 INFO [main] org.apache.catalina.startup.VersionLoggerListener.log Server version:        Apache Tomcat/8.0.53
