@@ -34,3 +34,4 @@ TODO
 
 * [ ] Explicar `VOLUMES [""]`
 * [ ] Explicar `EXPOSE`
+* [ ] Explicar `FROM <image> AS <alias>`

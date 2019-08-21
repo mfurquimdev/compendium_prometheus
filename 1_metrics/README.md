@@ -8,4 +8,8 @@ Tipos de Métrica
 
 As bibliotecas cliente do Prometheus oferecem quatro tipos de métricas: o **counter**, que é uma métrica cumulativa e representa algo que pode apenas aumentar, como o número de requisições total; o **gauge**, que representa um valor que pode tanto aumentar quanto diminuir, como o número de processos em um determinado momento; o **historgram**, que armazena os valores em determinados "baldes" e expõe uma soma e um contador e; o **summary** que, assim como o histogram, expõe uma variável de soma, uma de contador e uma que armazena seus dados em "baldes", porém com valores em porcentagem ao invés de absolutos.
 
+TODO
+----
 
+* [ ] Summary
+* [ ] Histogram vs Summary
