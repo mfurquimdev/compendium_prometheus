@@ -1,0 +1,15 @@
+version: '3.3'
+
+services:
+
+  generator:
+    image: mfurquim/metrics-generator-tabajara:v0.0.1
+    build: .
+    environment:
+      - COMPONENT_NAME=testserver
+      - COMPONENT_VERSION=1.0.0
+      - ACCIDENT_RESOURCE=transaction-080
+      - ACCIDENT_TYPE=latency
+      - ACCIDENT_RATIO=100
+    ports:
+      - 3000:3000

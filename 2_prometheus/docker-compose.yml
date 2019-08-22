@@ -12,26 +12,23 @@ services:
         evaluationinterval: 15s
         scrapetimeout: 10s
         tsdbretention: 3d
-        targetsfile: scrape/green/ptest-targets.json
-        rulespath: scrape/rules
-        startupfile: scrape/startup.sh
-        region: green
-        service: release
-        prometheusname: prometheus
+        targetsfile: ./targets.json
+        rulespath: rules
+        alertspath: alerts
+        scheme: http
+        metricspaths: /metrics,/metrics-http,/metrics-negocio
+        startupfile: startup.sh
     ports:
       - 9090:9090
     volumes:
       - prometheus:/prometheus
 
+  generator:
+    image: mfurquim/metrics-generator:v0.0.1
+    build: ./metrics_generator/
+    ports:
+      - 3000:3000
 
 volumes:
   prometheus:
-
-networks:
-  default:
-    ipam:
-      driver: default
-      config:
-        - subnet: 192.168.5.0/24
-
 

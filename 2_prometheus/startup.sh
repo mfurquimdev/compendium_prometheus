@@ -33,21 +33,6 @@ if [ "$TSDB_RETENTION" == "" ]; then
   exit 1
 fi
 
-if [ "$REGION" == "" ]; then
-  echo "REGION ENV is required" 1>&2
-  exit 1
-fi
-
-if [ "$SERVICE" == "" ]; then
-  echo "SERVICE ENV is required" 1>&2
-  exit 1
-fi
-
-if [ "$PROMETHEUS_NAME" == "" ]; then
-  echo "PROMETHEUS_NAME ENV is required" 1>&2
-  exit 1
-fi
-
 FILE=/etc/prometheus/prometheus.yml
 
 #### GLOBAL DEFINITIONS ####
@@ -85,56 +70,20 @@ scrape_configs:
 
 EOM
 
-### FILE SERVICE DISCOVERY DEFINITIONS ####
-
-for FT in $(echo $SERVICE | tr " " "\n")
+for MP in $(echo ${METRICS_PATHS} | tr "," "\n" )
 do
 
-if [ "$FT" == "global" ]; then
-
-  cat >> $FILE <<- EOM
-  - job_name: 'global_http'
-    metrics_path: '/mov-centralizador/metrics-global-http'
-    scheme: https
+cat >> $FILE <<- EOM
+  - job_name: "metrics_generator$MP"
+    metrics_path: $MP
+    scheme: $SCHEME
     tls_config:
       insecure_skip_verify: true
     file_sd_configs:
-      - files: 
-        - targets.json
-
-  - job_name: 'global_integration'
-    metrics_path: '/mov-centralizador/metrics-global-integration'
-    scheme: https
-    tls_config:
-      insecure_skip_verify: true
-    file_sd_configs:
-      - files: 
+      - files:
         - targets.json
 EOM
-fi
 
-if [ "$FT" == "release" ]; then
-
-  cat >> $FILE <<- EOM
-  - job_name: 'release_http'
-    metrics_path: '/mov-centralizador/metrics-release-http'
-    scheme: https
-    tls_config:
-      insecure_skip_verify: true
-    file_sd_configs:
-      - files: 
-        - targets.json
-
-  - job_name: 'release_integration'
-    metrics_path: '/mov-centralizador/metrics-release-integration'
-    scheme: https
-    tls_config:
-      insecure_skip_verify: true
-    file_sd_configs:
-      - files: 
-        - targets.json
-EOM
-fi
 done
 
 echo "==prometheus.yml=="
