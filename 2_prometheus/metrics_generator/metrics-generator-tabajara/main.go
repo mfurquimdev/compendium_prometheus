@@ -122,7 +122,7 @@ func main() {
 		}
 	}
 
-	logrus.Infof("%s %s %s %s %s %s", componentName, componentVersion, resourcesAffectedNames, accidentType, accidentRatio)
+	logrus.Infof("%s %s %s %s %s", componentName, componentVersion, resourcesAffectedNames, accidentType, accidentRatio)
 
 	prometheus.MustRegister(httpURIRequests)
 	prometheus.MustRegister(httpAppRequests)
@@ -148,8 +148,8 @@ func main() {
 
 func generateHTTPMetrics() {
 	logrus.Infof("Starting requests simulation to generate centralizador metrics...")
-	var uris = generateItems("/resources/somegroup/item-", 30)
-	var statuses = []string{"4xx", "2xx", "5xx"}
+	var uris = generateItems("/api/item-", 1)
+	var statuses = []string{"2xx", "5xx"}
 	var methods = []string{"POST", "GET"}
 	var deviceOsName = []string{"ios", "android"}
 	var deviceAppVersion = generateItems("v", 4)
@@ -327,7 +327,7 @@ func getRandomElemNormal(items []string) string {
 func generateItems(prefix string, qtty int) []string {
 	result := []string{}
 	for i := 1; i <= qtty; i++ {
-		result = append(result, fmt.Sprintf("%s%04d", prefix, i))
+		result = append(result, fmt.Sprintf("%s%d", prefix, i))
 	}
 	return result
 }
