@@ -2,6 +2,8 @@
 
 Randomly generates Prometheus metrics for simulating default /metrics endpoints accross servers
 
+Project at github: https://github.com/mfurquim/metrics-generator
+
 ### Usage
 
 docker-compose.yml
