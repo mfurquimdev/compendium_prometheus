@@ -36,16 +36,33 @@ scrape_configs:
         - targets.json
 ```
 
-A seção `global` define as configurações que serão usadas para todos os `jobs`. O `scrape_interval` define de quanto em quanto tempo o Prometheus vai coletar as métricas nos alvos (este intervalo de tempo independe do tempo que levou para fazer a coleta<sup>[prometheus-ticker](https://utcc.utoronto.ca/~cks/space/blog/sysadmin/PrometheusScrapeIntervalBit)</sup>). O `evaluation_interval` é o tempo que o Prometheus tem para processar as regras definidas nos arquivos de regras. O `scrape_timeout` limita o tempo que o Prometheus pode fazer fazer a coleta, por alvo. A seção seguinte é a `rule_files` no qual possui uma lista de arquivos de regras. Cada arquivo `yml` embaixo possui o nome do grupo das regras, o nome da regra e a expressão para processar antes de armazenar no tsdb.
+A seção `global` define as configurações que serão usadas para todos os `jobs`. O `scrape_interval` define de quanto em quanto tempo o Prometheus vai coletar as métricas nos alvos (este intervalo de tempo independe do tempo que levou para fazer a coleta<sup>[prometheus-ticker](https://utcc.utoronto.ca/~cks/space/blog/sysadmin/PrometheusScrapeIntervalBit)</sup>). O `evaluation_interval` é o tempo que o Prometheus tem para processar as regras definidas nos arquivos de regras. O `scrape_timeout` limita o tempo que o Prometheus pode fazer a coleta, por alvo. A seção seguinte é a `rule_files` no qual possui uma lista de arquivos de regras. Cada arquivo `yml` embaixo possui o nome do grupo das regras, o nome da regra e a expressão para processar antes de armazenar no tsdb.
 
 Na seção `scrape_configs` estão definidas os alvos para coletar as métricas. Para cada alvo, é preciso um nome, um caminho de métricas (_endpoint_), e um arquivo com a lista dos alvos (pode ser um `dns:porta` ou `ip:porta`). No caso deste exemplo, como está sendo usado o `docker-compose` para executar os serviços, o alvo no `targets.json` pode ser com o nome do serviço (`gerador:3000`) pois o docker resolve o nome e encontra seu endereço.
-
 
 
 rules
 -----
 
+As regras de gravação são definidas de acordo com a estrutura definida no site 
 <sup>[rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/)</sup>
+
+```
+groups:
+- name: http_requests_duration_seconds
+  rules:
+  - record: http_requests_duration_seconds_sum
+    expr: sum(irate(http_requests_duration_seconds_sum[1m])) by (status, uri)
+
+  - record: http_requests_duration_seconds_count
+    expr: sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+
+  - record: http_requests_duration_seconds_average
+    expr:
+      sum(irate(http_requests_duration_seconds_sum[1m])) by (status, uri)
+      /
+      sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+```
 
 
 alerts

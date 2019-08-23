@@ -1,0 +1,32 @@
+# Alerts as explained at https://github.com/mfurquim/prometheus-alerts
+
+groups:
+- name: Alerta sobre média dos máximos
+  rules:
+  - record: http_requests_duration_seconds_count:predict15m_avg1m_sum_irate1m
+    expr:
+      predict_linear(
+        avg_over_time(
+          sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+        [1m:])
+      [15m:], 10*60)
+
+  - record: http_requests_duration_seconds_count:avg3h_max1h_avg1m_sum_irate1m
+    expr:
+      avg_over_time(
+        max_over_time(
+          avg_over_time(
+            sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+          [1m:])
+        [1h:])
+      [3h:])
+
+  - alert: http_requests_seconds_summary_count_abnormal_increase
+    expr:
+      http_requests_duration_seconds_count:predict15m_avg1m_sum_irate1m
+      >
+      http_requests_duration_seconds_count:avg3h_max1h_avg1m_sum_irate1m
+    for: 10m
+    annotations:
+      description: Crescimento anormal da taxa de requisições por segundo, indicando quebra de recorde histórico. URI '{{ $labels.uri }}' e Status '{{ $labels.status }}'
+      summary: Caso a predição sobre a média da frequência de requisições http supere a média dos picos durante dez minutos, um alerta será lançado.

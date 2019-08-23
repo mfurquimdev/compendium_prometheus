@@ -1,0 +1,15 @@
+groups:
+- name: http_requests_duration_seconds
+  rules:
+  - record: http_requests_duration_seconds_sum
+    expr: sum(irate(http_requests_duration_seconds_sum[1m])) by (status, uri)
+
+  - record: http_requests_duration_seconds_count
+    expr: sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+
+  - record: http_requests_duration_seconds_average
+    expr:
+      sum(irate(http_requests_duration_seconds_sum[1m])) by (status, uri)
+      /
+      sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+
