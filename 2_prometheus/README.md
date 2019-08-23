@@ -23,7 +23,7 @@ global:
   scrape_timeout: 10s
 
 rule_files: 
-  - aggr_global_http_per_server.yml
+  - sinais_monitoracao.yml
 
 scrape_configs:
   - job_name: 'prometheus'
@@ -63,8 +63,8 @@ http_requests_duration_seconds_count{method="GET", status="5xx",uri="/api/item1"
 Após a soma, tem-se a seguinte métrica:
 
 ```
-http_requests_duration_seconds_count{status="2xx",uri="/api/item1"}	3
-http_requests_duration_seconds_count{status="5xx",uri="/api/item1"}	5
+http_requests_duration_seconds_count{status="2xx",uri="/api/item1"} 3
+http_requests_duration_seconds_count{status="5xx",uri="/api/item1"} 5
 ```
 
 
@@ -147,21 +147,18 @@ http_requests_duration_seconds_latencia_media {uri="/api/item1"} 1.5
 Alertas do Prometheus
 ---------------------
 
-Os alertas do prometheus
+Os alertas do prometheus são bastante parecidos com as regras de armazenamento (_record rules_). A diferença é que a expressão deve retornar um valor _boolean_. Caso retorne verdadeiro, o alerta passa de _inactive_ para _pending_ ou _firing_. Se a regra tiver a palavra-chave `for` definida, enquanto a regra estiver retornando verdadeiro, o alerta estará no estado _pending_. Após passar o tempo definido em `for`, o alerta passará para o estado _firing_. Em outras palavras, a regra de alerta deve retornar verdadeiro por dez minutos (no exemplo abaixo) para que comece a disparar.
 
 <sup>[alerts](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)</sup>
 
 ```yml
-  # If rate of requests per second is greater than the average of peaks
-  - alert: http_requests_duration_seconds_count_abnormal_increase
-    expr:
-      http_requests_duration_seconds_count:predict15m_avg1m_sum_irate
-      >
-      http_requests_duration_seconds_count:avg3h_max1h_avg1m_sum_irate
+  # If error rate is above fifty percent
+  - alert: http_requests_duration_seconds_error_above_50_percent
+    expr: http_requests_duration_seconds_error_rate > 0.5
     for: 10m
     annotations:
-      description: Taxa de crescimento anormal da taxa de requisições por segundo, indicando quebra de recorde histórico. Versão do Centralizador '{{ $labels.component_version }}', Status '{{ $labels.status }}', Versão App '{{ $labels.device_app_version }}'.
-      summary: Caso a predição sobre a média da taxa de requisições http do aplicativo supere a média dos picos durante dez minutos, um alerta será lançado.
+      description: Taxa de erro acima de 50% da uri '{{ $labels.uri }}'.
+      summary: Caso a taxa de erro esteja acima de 50%, por um período superior a dez minutos, um alerta será lançado.
 ```
 
 Caso queira entender um pouco melhor sobre alertas do prometheus, o projeto [mfurquim/prometheus-alerts](https://github.com/mfurquim/prometheus-alerts) no github explica um alerta de aumento anormal no número de requisições por segundo, utilizando o prometheus com visualização no grafana. Eis o _screenshot_ do alerta no grafana:
@@ -169,104 +166,4 @@ Caso queira entender um pouco melhor sobre alertas do prometheus, o projeto [mfu
 ![Alerta de aumento anormal nas requisições](./img/Alerta_de_aumento_anormal_nas_requisicoes.png "Alerta de aumento anormal nas requisições")
 
 No gráfico acima, a linha em verde representa a taxa de requisições por segundo (suavizada fazendo a média em um minuto). A linha em amarelo é a predição de qual a taxa de requisição em dez minuto, com base em quinze minutos de histórico. A linha em azul é a média dos picos da taxa de requisições. Por fim, a área vermelha representa os períodos em que a predição é maior que a média dos máximo. Caso isso continue a acontecer por dez minutos, um alerta será lançado
-
-
-**docker-compose.yml**
-```
-version: '3.3'
-
-services:
-
-  prometheus:
-    image: mfurquim/prometheus:1.0.0
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-      args:
-        scrapeinterval: 30s
-        evaluationinterval: 15s
-        scrapetimeout: 10s
-        tsdbretention: 3d
-        targetsfile: targets.json
-        rulespath: rules
-        alertspath: alerts
-        scheme: http
-        metricspaths: /metrics,/metrics-http,/metrics-negocio
-        startupfile: startup.sh
-    ports:
-      - 9090:9090
-    volumes:
-      - prometheus:/prometheus
-
-  generator:
-    image: mfurquim/metrics-generator:v1.0.0
-    build: ./metrics_generator/
-    ports:
-      - 3000:3000
-
-volumes:
-  prometheus:
-```
-
-**Dockerfile**
-```
-FROM prom/prometheus:v2.12.0
-
-#### ARGS #####
-
-# Defines the path o the files for startup script, targets, rules, and alerts
-# - startupfile is the script to initialize the container
-# - targetsfile contains a list of targets to scrape
-# - rulespath is a directory which contains all the files for record rules
-# - alertspath is a directory which contains all the files for alert rules
-# - metricspaths is the endpoint which the metrics are exposed to scrape
-ARG startupfile
-ARG targetsfile
-ARG rulespath
-ARG alertspath
-ARG metricspaths
-
-# Defines the configuration of the Prometheus instance
-# - scrapeinterval is the interval in seconds that it will collect the metrics
-# - evaluationinterval is the time in seconds that it has to process the record rules and store them
-# - scrapetimeout is the time in seconds for each scrape to timeout
-# - tsdbretention is how long it should keep data in the database
-# - scheme is either http or https
-ARG scrapeinterval
-ARG evaluationinterval
-ARG scrapetimeout
-ARG tsdbretention
-ARG scheme
-
-#### ENVS ####
-
-ENV SCRAPE_INTERVAL ${scrapeinterval}
-ENV EVALUATION_INTERVAL ${evaluationinterval}
-ENV SCRAPE_TIMEOUT ${scrapetimeout}
-ENV TSDB_RETENTION ${tsdbretention}
-ENV SCHEME ${scheme}
-ENV METRICS_PATHS ${metricspaths}
-
-#### CONFIG ####
-
-USER root
-
-ADD $targetsfile /etc/prometheus/targets.json
-ADD $rulespath /etc/prometheus/
-ADD $alertspath /etc/prometheus/
-ADD $startupfile /
-
-ADD prometheus.yml /etc/prometheus/
-ADD build.sh /
-
-RUN chmod -R 755 /etc/prometheus/
-RUN chmod -R 755 /startup.sh
-RUN chmod +x /build.sh
-
-RUN sh /build.sh /etc/prometheus/
-
-ENTRYPOINT [ "/bin/sh" ]
-CMD [ "/startup.sh" ]
-```
-
 
