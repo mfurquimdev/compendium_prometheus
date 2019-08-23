@@ -41,28 +41,100 @@ A seção `global` define as configurações que serão usadas para todos os `jo
 Na seção `scrape_configs` estão definidas os alvos para coletar as métricas. Para cada alvo, é preciso um nome, um caminho de métricas (_endpoint_), e um arquivo com a lista dos alvos (pode ser um `dns:porta` ou `ip:porta`). No caso deste exemplo, como está sendo usado o `docker-compose` para executar os serviços, o alvo no `targets.json` pode ser com o nome do serviço (`gerador:3000`) pois o docker resolve o nome e encontra seu endereço.
 
 
-rules
------
+Regras e sinais para monitoração
+-----------------------
 
-As regras de gravação são definidas de acordo com a estrutura definida no site 
-<sup>[rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/)</sup>
+As regras de gravação são definidas de acordo com a estrutura definida no site do prometheus<sup>[rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/)</sup>, tendo o nome do grupo de métricas, o nome da regra, e a expressão para ser processada. As métricas que são definidas neste exemplo seguiram três dos quatros sinais de monitoração de acordo com o livro [Site Reliability Engineering](https://landing.google.com/sre/sre-book/chapters/monitoring-distributed-systems/#xref_monitoring_golden-signals), escrito por engenheiros da Google. Os quatro sinais de ouro da monitoração são: **latência**, que é o tempo de resposta do serviço; **tráfego**, que é a medida da demanda do sistema, como quantidade de requisições http por segundo; **erros**, que representa a taxa de erro do serviço e; **saturação**, que indica quão "cheio" está o sistema.
 
+
+### Agrupamento de métrica
+
+O teste foi realizado na versão 2.12 do prometheus por conta da facilidade com sub-queries introduzida na versão 2.7. Uma regra comum de se ter nas métricas é calcular a taxa da métrica. Neste caso, é utilizado o `irate` para calcular a quantidade de requisições por segundo. Depois de calcular a taxa, é feito uma agregação por `status` e por `uri`. Isso quer dizer que, caso haja mais de uma métrica com essas duas _labels_ iguais, elas serão somadas. A regra que faz isso é a seguinte: `sum(irate(http_requests_duration_seconds_count[1m])) by (uri)`.
+
+Destas três métricas que possuem valores diferentes de rótulos, duas possuem `status` e `uri` iguais e serão agrupadas:
 ```
+http_requests_duration_seconds_count{component_name="testserver1",component_version="1.0.0",instance="generator:3000",job="metrics_generator/metrics",method="POST",server_name="192.168.5.1",status="2xx",uri="/resources/somegroup/item-0001"} 1
+http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="2xx",uri="/resources/somegroup/item-0001"} 2
+http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="5xx",uri="/resources/somegroup/item-0001"} 5
+```
+
+Após a soma, tem-se a seguinte métrica:
+```
+http_requests_duration_seconds_count{status="2xx",uri="/resources/somegroup/item-0001"}	3
+http_requests_duration_seconds_count{status="5xx",uri="/resources/somegroup/item-0001"}	5
+```
+
+
+### Tráfego
+
+Para calcular a quantidade de requisições http recebidas em cada _endpoint_, basta somar por `uri`. A seguinte regra faz exatamente isto:
+```yml
 groups:
-- name: http_requests_duration_seconds
+- name: Taxa de requisição
   rules:
-  - record: http_requests_duration_seconds_sum
-    expr: sum(irate(http_requests_duration_seconds_sum[1m])) by (status, uri)
-
-  - record: http_requests_duration_seconds_count
-    expr: sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
-
-  - record: http_requests_duration_seconds_average
-    expr:
-      sum(irate(http_requests_duration_seconds_sum[1m])) by (status, uri)
-      /
-      sum(irate(http_requests_duration_seconds_count[1m])) by (status, uri)
+  - record: http_requests_duration_seconds_total:sum_irate
+    expr: sum(irate(http_requests_duration_seconds_count[1m])) by (uri)
 ```
+
+
+### Taxa de erro
+
+Com estas métricas é possível calcular a razão de erros das requisições. Para isso, é preciso filtrar os valores de erro e dividr pela soma de todas as requisições desse `uri`. As regras do prometheus para fazer isso são as seguintes:
+```yml
+groups:
+- name: Taxa de erro
+  rules:
+  - record: http_requests_duration_seconds_error:sum_irate
+    expr: sum(irate(http_requests_duration_seconds_count{status!="2xx"}[1m])) by (uri)
+
+  - record: http_requests_duration_seconds_error_rate
+    expr:
+      http_requests_duration_seconds_error:sum_irate
+      /
+      http_requests_duration_seconds_total:sum_irate
+```
+
+O resultado da regra `http_requests_duration_seconds_error_rate` será `5/8 = 0.625` ou `62,5%` de erro das requisições:
+```
+http_requests_duration_seconds_count{uri="/resources/somegroup/item-0001"} 0.625
+```
+
+
+### Latência média
+
+Outro sinal importante para monitrar é a latência do serviço. Para isso, é preciso o tempo de cada requisição e a quantidade total de requisições. Ao dividir um pelo outro, tem-se a latência média de cada `uri`.
+
+```yml
+groups:
+- name: Latência média
+  rules:
+  - record: http_requests_duration_seconds_sum:sum_irate
+    expr: sum(irate(http_requests_duration_seconds_sum[1m])) by (uri)
+
+  - record: http_requests_duration_seconds_latencia_media
+    expr:
+      http_requests_duration_seconds_sum:sum_irate
+      /
+      http_requests_duration_seconds_total:sum_irate
+```
+
+Para estes valores de métricas:
+```
+http_requests_duration_seconds_count{component_name="testserver1",component_version="1.0.0",instance="generator:3000",job="metrics_generator/metrics",method="POST",server_name="192.168.5.1",status="2xx",uri="/resources/somegroup/item-0001"} 1
+http_requests_duration_seconds_sum  {component_name="testserver1",component_version="1.0.0",instance="generator:3000",job="metrics_generator/metrics",method="POST",server_name="192.168.5.1",status="2xx",uri="/resources/somegroup/item-0001"} 0.2
+http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="2xx",uri="/resources/somegroup/item-0001"} 2
+http_requests_duration_seconds_sum  {component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="2xx",uri="/resources/somegroup/item-0001"} 1.1
+http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="5xx",uri="/resources/somegroup/item-0001"} 5
+http_requests_duration_seconds_sum  {component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="5xx",uri="/resources/somegroup/item-0001"} 10.7
+```
+
+Tem-se estes resultados:
+```
+http_requests_duration_seconds_count:sum_irate{uri="/resources/somegroup/item-0001"} 8
+http_requests_duration_seconds_sum:sum_irate  {uri="/resources/somegroup/item-0001"} 12.0
+http_requests_duration_seconds_latencia_media {uri="/resources/somegroup/item-0001"} 1.5
+```
+
 
 Alertas do Prometheus
 ---------------------
@@ -77,7 +149,7 @@ No gráfico acima, a linha em verde representa a taxa de requisições por segun
 
 A simulação do aumento de requisições por segundo foi feita com um script em bash alterando o gerador de métricas. Mas antes disso, foi enviado uma requisição para zerar o número de requisições de erro (5xx). Isto garante que o número de requisições 2xx por segundo gerado é o mais próximo de 100% o possível. Ainda há algumas requisições 5xx, algo em torno de 1%.
 
-```bash
+```ash
 curl --header "Content-Type: application/json" --request POST --data '{"resourcename": "/resources/somegroup/item-0001", "type": "errorrate", "value": 0.0}' http://localhost:3000/accidents
 ```
 
@@ -94,94 +166,6 @@ for (( i = 100; i < 10000; i = i * 10 )); do
 	done;
 done;
 ```
-
-### Agrupamento de métrica
-
-O teste foi realizado na versão 2.12 do prometheus por conta da facilidade com sub-queries introduzida na versão 2.7. Uma regra comum de se ter nas métricas é calcular a taxa da métrica. Neste caso, é utilizado o `irate` para calcular a quantidade de requisições por segundo. Depois de calcular a taxa de requisição, é feito uma agregação por `status` e por `uri`. Isso quer dizer que, caso haja duas métricas com essas duas _labels_ iguais, elas serão somadas.
-
-Ex.: Destas três métricas que possuem valores diferentes de rótulos, duas possuem `status` e `uri` iguais e serão agrupadas:
-```
-http_requests_duration_seconds_count{component_name="testserver1",component_version="1.0.0",instance="generator:3000",job="metrics_generator/metrics",method="POST",server_name="192.168.5.1",status="2xx",uri="/resources/somegroup/item-0001"}	1
-http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="2xx",uri="/resources/somegroup/item-0001"}	2
-http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="5xx",uri="/resources/somegroup/item-0001"}	5
-```
-
-Após a soma, tem-se a seguinte métrica:
-```
-http_requests_duration_seconds_count{status="2xx",uri="/resources/somegroup/item-0001"}	3
-http_requests_duration_seconds_count{status="5xx",uri="/resources/somegroup/item-0001"}	5
-```
-
-### Taxa de erro
-
-Com estas métricas é possível calcular a razão de erros das requisições. Para isso, é preciso filtrar os valores de erro e dividr pela soma de todas as requisições desse `uri`. As regras do prometheus para fazer isso são as seguintes:
-
-```yml
-groups:
-- name: Taxa de erro
-  rules:
-  - record: http_requests_duration_seconds_error:sum_irate
-    expr: sum(irate(http_requests_duration_seconds_count{status!="2xx",uri="/resources/somegroup/item-0001"}[1m])) by (status, uri)
-
-  - record: http_requests_duration_seconds_total:sum_irate
-    expr: sum(irate(http_requests_duration_seconds_count{uri="/resources/somegroup/item-0001"}[1m])) by (status, uri)
-
-  - record: http_requests_duration_seconds_error_rate
-    expr:
-      http_requests_duration_seconds_error:sum_irate
-      /
-      http_requests_duration_seconds_total:sum_irate
-```
-
-O resultado da regra `http_requests_duration_seconds_error_rate` será `5/8 = 0.625` ou `62,5%` de erro das requisições:
-
-```
-http_requests_duration_seconds_count{uri="/resources/somegroup/item-0001"}	0.625
-```
-
-### Latência média
-
-Outro sinal importante para monitrar é a latência do serviço. Para isso, é preciso o tempo de cada requisição e a quantidade de requisição. Ao dividir um pelo outro, tem-se a latência média de cada `uri`.
-
-```yml
-groups:
-- name: Latência média
-  rules:
-  - record: http_requests_duration_seconds_count:sum_irate
-    expr: sum(irate(http_requests_duration_seconds_count{uri="/resources/somegroup/item-0001"}[1m])) by (status, uri)
-
-  - record: http_requests_duration_seconds_sum:sum_irate
-    expr: sum(irate(http_requests_duration_seconds_sum{uri="/resources/somegroup/item-0001"}[1m])) by (status, uri)
-
-  - record: http_requests_duration_seconds_latencia_media
-    expr:
-      http_requests_duration_seconds_sum:sum_irate
-      /
-      http_requests_duration_seconds_count:sum_irate
-```
-
-Para estes valores de métricas:
-
-```
-http_requests_duration_seconds_count{component_name="testserver1",component_version="1.0.0",instance="generator:3000",job="metrics_generator/metrics",method="POST",server_name="192.168.5.1",status="2xx",uri="/resources/somegroup/item-0001"}	1
-http_requests_duration_seconds_sum  {component_name="testserver1",component_version="1.0.0",instance="generator:3000",job="metrics_generator/metrics",method="POST",server_name="192.168.5.1",status="2xx",uri="/resources/somegroup/item-0001"}	0.2
-http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="2xx",uri="/resources/somegroup/item-0001"}	2
-http_requests_duration_seconds_sum  {component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="2xx",uri="/resources/somegroup/item-0001"}	1.1
-http_requests_duration_seconds_count{component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="5xx",uri="/resources/somegroup/item-0001"}	5
-http_requests_duration_seconds_sum  {component_name="testserver2",component_version="2.0.0",instance="generator:3000",job="metrics_generator/metrics",method="GET", server_name="192.168.5.2",status="5xx",uri="/resources/somegroup/item-0001"}	10.7
-```
-
-Tem-se estes resultados:
-
-```
-http_requests_duration_seconds_count:sum_irate{uri="/resources/somegroup/item-0001"} 8
-http_requests_duration_seconds_sum:sum_irate  {uri="/resources/somegroup/item-0001"} 12.0
-http_requests_duration_seconds_latencia_media {uri="/resources/somegroup/item-0001"} 1.5
-```
-
-
-### Taxa de requisição
-
 
 
 
