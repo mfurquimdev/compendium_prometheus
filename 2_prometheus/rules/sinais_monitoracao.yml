@@ -1,0 +1,28 @@
+groups:
+- name: Taxa de requisição
+  rules:
+  - record: http_requests_duration_seconds_total:sum_irate
+    expr: sum(irate(http_requests_duration_seconds_count[1m])) by (uri)
+
+- name: Taxa de erro
+  rules:
+  - record: http_requests_duration_seconds_error:sum_irate
+    expr: sum(irate(http_requests_duration_seconds_count{status!="2xx"}[1m])) by (uri)
+
+  - record: http_requests_duration_seconds_error_rate
+    expr:
+      http_requests_duration_seconds_error:sum_irate
+      /
+      http_requests_duration_seconds_total:sum_irate
+
+- name: Latência média
+  rules:
+  - record: http_requests_duration_seconds_sum:sum_irate
+    expr: sum(irate(http_requests_duration_seconds_sum[1m])) by (uri)
+
+  - record: http_requests_duration_seconds_latencia_media
+    expr:
+      http_requests_duration_seconds_sum:sum_irate
+      /
+      http_requests_duration_seconds_total:sum_irate
+
