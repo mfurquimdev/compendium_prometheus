@@ -1,0 +1,42 @@
+groups:
+- name: Golden Signal
+  rules:
+
+  - record: http_requests_throughput
+    expr:
+      sum(
+        irate( http_requests_seconds_histogram_count[2m] )
+      ) by ( uri )
+
+
+  - record: http_requests_latency
+    expr:
+      sum(
+        irate( http_requests_seconds_histogram_sum[2m] )
+      ) by ( uri )
+      /
+      sum(
+        irate( http_requests_seconds_histogram_count[2m] )
+      ) by ( uri )
+
+
+  - record: http_requests_error
+    expr:
+      sum(
+        irate( http_requests_seconds_histogram_count{status!="2xx"}[2m] )
+      ) by ( uri )
+      /
+      sum(
+        irate( http_requests_seconds_histogram_count[2m] )
+      ) by ( uri )
+
+
+  - alert: http_requests_error_higher_50_percent
+    expr:
+      http_requests_erro
+      >
+      0.5
+    for: 10m
+    annotations:
+      description: Taxa de erro acima de cinquenta porcento. URI '{{ $labels.uri }}'.
+      summary: Caso a taxa de erro esteja acima de cinquenta porcento durante dez minutos, um alerta será lançado.

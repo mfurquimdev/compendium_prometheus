@@ -1,0 +1,33 @@
+version: '3.3'
+
+services:
+
+  generator:
+    image: mfurquim/metrics-generator:1.0.0
+    environment:
+      - COMPONENT_NAME=testserver
+      - COMPONENT_VERSION=1.0.0
+    ports:
+      - 3000:32865
+
+  grafana:
+    image: mfurquim/grafana:5.2.4
+    build: ./grafana/
+    ports:
+      - 4000:3000
+    volumes:
+      - grafana:/data
+
+  prometheus:
+    image: mfurquim/prometheus:v2.7.2
+    build: ./prometheus/
+    ports:
+      - 9090:9090
+    environment:
+      - STATIC_SCRAPE_TARGETS=generator@generator:32865
+    volumes:
+      - prometheus:/prometheus
+
+volumes:
+  grafana:
+  prometheus:
